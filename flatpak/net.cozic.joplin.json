@@ -42,6 +42,23 @@
             ]
         },
         {
+            "name": "yarn",
+            "buildsystem": "simple",
+            "build-commands": [
+                "mkdir -p /app/share/yarn",
+                "cp -a * /app/share/yarn/",
+                "ln -s /app/share/yarn/bin/yarn /app/bin/yarn",
+                "ln -s /app/share/yarn/bin/yarnpkg /app/bin/yarnpkg"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/yarnpkg/yarn/releases/download/v1.3.2/yarn-v1.3.2.tar.gz",
+                    "sha256": "6cfe82e530ef0837212f13e45c1565ba53f5199eec2527b85ecbcd88bf26821d"
+                }
+            ] 
+        },
+        {
             "name": "joplin",
             "build-options" : {
                 "env": {
@@ -63,15 +80,27 @@
                     "type": "script",
                     "dest-filename": "run.sh",
                     "commands": [ "npm start --prefix=/app/main" ]
+                },
+                {
+                    "type": "file",
+                    "path": "joplin-yarn.lock",
+                    "dest-filename": "ElectronClient/app/yarn.lock",
+                    "dest": "main"
+                },
+                {
+                    "type": "file",
+                    "path": "yarnrc",
+                    "dest": "main",
+                    "dest-filename": "ElectronClient/app/.yarnrc"
                 }
             ],
             "build-commands": [
                 /* Install npm dependencies */
-                "cd main/Tools ; npm install --prefix=main --offline --cache=/run/build/joplin/npm-cache/ ",
+                "cd main/Tools ; npm install --prefix=../../ --offline --cache=/run/build/joplin/npm-cache/ ",
                 "cd main/ElectronClient/app",
                 "# rsync --delete -a ../../ReactNativeClient/lib/ lib/",
-                "npm install --prefix=main --offline --cache=/run/build/joplin/npm-cache/",
-                "yarn dist",
+                "cd main/ElectronClient/app ; npm install --prefix=../../ --offline --cache=/run/build/joplin/npm-cache/",
+                "cd main/ElectronClient/app ; yarn --cwd /run/build/joplin/main --offline ",
                 /* Bundle app and dependencies */
                 "mkdir -p /app/main /app/bin",
                 "cp -ra main/* /app/main/",
