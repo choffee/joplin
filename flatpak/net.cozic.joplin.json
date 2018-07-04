@@ -1,0 +1,85 @@
+{
+    "app-id": "net.cozic.joplin",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "1.6",
+    "branch": "stable",
+    "sdk": "org.freedesktop.Sdk",
+    "base": "io.atom.electron.BaseApp",
+    "base-version": "stable",
+    "command": "run.sh",
+    "separate-locales": false,
+    "finish-args": [
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=pulseaudio",
+        "--share=network"
+    ],
+    "build-options" : {
+        "cflags": "-O2 -g",
+        "cxxflags": "-O2 -g",
+        "env": {
+            "NPM_CONFIG_LOGLEVEL": "info"
+        }
+    },
+    "modules": [
+        {
+            "name": "nodejs",
+            "cleanup": [
+                "/include",
+                "/share",
+                "/app/lib/node_modules/npm/changelogs",
+                "/app/lib/node_modules/npm/doc",
+                "/app/lib/node_modules/npm/html",
+                "/app/lib/node_modules/npm/man",
+                "/app/lib/node_modules/npm/scripts"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    /* "url": "https://nodejs.org/dist/v8.11.2/node-v8.11.2.tar.xz", */
+                    /* "sha256": "539946c0381809576bed07424a35fc1740d52f4bd56305d6278d9e76c88f4979" */
+                    "url": "https://nodejs.org/dist/v8.10.19/node-v8.10.19.tar.xz",
+                    "sha256": "539946c0381809576bed07424a35fc1740d52f4bd56305d6278d9e76c88f4979"
+                }
+            ]
+        },
+        {
+            "name": "joplin",
+            "build-options" : {
+                "env": {
+                    /* Need this for electron-download to find the cached electron binary */
+                    "electron_config_cache": "/run/build/joplin/npm-cache"
+                }
+            },
+            "buildsystem": "simple",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/laurent22/joplin/archive/v1.0.104.tar.gz",
+                    "sha256": "cbfc0001ce81c89bd4d4bfdc409fede29582dc87dc0c4e726a64c56ff638073c",
+                    "dest": "main"
+                },
+                "generated-sources.json",
+                /* Wrapper to launch the app */
+                {
+                    "type": "script",
+                    "dest-filename": "run.sh",
+                    "commands": [ "npm start --prefix=/app/main" ]
+                }
+            ],
+            "build-commands": [
+                /* Install npm dependencies */
+                "cd Tools ; npm install --prefix=main --offline --cache=/run/build/joplin/npm-cache/ ; cd ../",
+                "cd ElectronClient/app",
+                "rsync --delete -a ../../ReactNativeClient/lib/ lib/",
+                "npm install --prefix=main --offline --cache=/run/build/joplin/npm-cache/",
+                "yarn dist",
+                /* Bundle app and dependencies */
+                "mkdir -p /app/main /app/bin",
+                "cp -ra main/* /app/main/",
+                /* Install app wrapper */
+                "install run.sh /app/bin/"
+            ]
+        }
+    ]
+}
